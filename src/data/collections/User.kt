@@ -11,6 +11,7 @@ data class User(
     val profileImgUrl: String = DEFAULT_PROFILE_IMG_URL,
     var following: List<String> = listOf(),
     var followers: List<String> = listOf(),
+    var posts: Int = 0,
     @BsonId
     val uid: String = ObjectId().toString()
 )

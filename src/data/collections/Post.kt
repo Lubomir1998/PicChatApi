@@ -9,6 +9,7 @@ data class Post(
     val description: String,
     val date: Long,
     var likes: List<String> = listOf(),
+    var comments: Int = 0,
     @BsonId
     val id: String = ObjectId().toString()
 )

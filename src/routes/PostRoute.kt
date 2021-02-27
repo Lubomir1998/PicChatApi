@@ -2,10 +2,12 @@ package com.example.routes
 
 import com.example.data.*
 import com.example.data.collections.Post
+import com.example.data.requests.ToggleLikeRequest
 import com.example.data.responses.SimpleResponse
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.Conflict
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.request.*
@@ -25,11 +27,11 @@ fun Route.postRoute() {
                         call.receive<Post>()
                     }
                     catch (e: ContentTransformationException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                        call.respond(BadRequest)
                         return@withContext
                     }
 
-                    if(createPost(post)) {
+                    if(createPost(post, post.authorUid)) {
                         call.respond(OK, SimpleResponse(true, "Posted successfully"))
                     }
                     else {
@@ -54,6 +56,29 @@ fun Route.postRoute() {
                 }
 
 
+            }
+        }
+    }
+
+    route("/toggleLike") {
+        authenticate {
+            post {
+                withContext(Dispatchers.IO) {
+
+                    val request = try {
+                        call.receive<ToggleLikeRequest>()
+                    } catch (e: ContentTransformationException) {
+                        call.respond(BadRequest)
+                        return@withContext
+                    }
+
+                    if (toggleLike(request.postId, request.uid)) {
+                        call.respond(OK)
+                    } else {
+                        call.respond(Conflict)
+                    }
+
+                }
             }
         }
     }

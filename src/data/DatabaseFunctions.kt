@@ -1,12 +1,14 @@
 package com.example.data
 
 import com.example.data.collections.Auth
+import com.example.data.collections.Comment
 import com.example.data.collections.Post
 import com.example.data.collections.User
 import com.example.security.checkHashForPassword
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.eq
 import org.litote.kmongo.reactivestreams.KMongo
+import org.litote.kmongo.setValue
 
 val client = KMongo.createClient().coroutine
 val database = client.getDatabase("PicChatDB")
@@ -14,7 +16,11 @@ val database = client.getDatabase("PicChatDB")
 val users = database.getCollection<User>()
 val auths = database.getCollection<Auth>()
 val posts = database.getCollection<Post>()
+val comments = database.getCollection<Comment>()
 
+
+
+// Auth & Users
 
 suspend fun registerUser(auth: Auth): Boolean {
     return auths.insertOne(auth).wasAcknowledged()
@@ -33,17 +39,6 @@ suspend fun checkIfPasswordIsCorrect(email: String, password: String): Boolean {
     return checkHashForPassword(password, actualPassword)
 }
 
-suspend fun createPost(post: Post): Boolean {
-    return posts.insertOne(post).wasAcknowledged()
-}
-
-suspend fun getPostsOfFollowing(following: List<String>): List<Post> {
-    val allPosts = posts.find().toList()
-    return allPosts.filter {
-        following.contains(it.authorUid)
-    }.toList()
-}
-
 suspend fun getUidByEmail(email: String): String? {
     return auths.findOne(Auth::email eq email)?.uid
 }
@@ -55,3 +50,55 @@ suspend fun getUserByEmail(email: String): User? {
 suspend fun getUserById(uid: String): User? {
     return users.findOneById(uid)
 }
+
+
+// Posts
+
+suspend fun createPost(post: Post, uid: String): Boolean {
+    val user = users.findOneById(uid) ?: return false
+    return posts.insertOne(post).wasAcknowledged().also {
+        if(it) users.updateOneById(uid, setValue(User::posts, user.posts + 1))
+    }
+}
+
+suspend fun deletePost(postId: String, uid: String): Boolean {
+    val user = users.findOneById(uid) ?: return false
+    return posts.deleteOneById(postId).wasAcknowledged().also {
+        if(it) users.updateOneById(uid, setValue(User::posts, user.posts - 1))
+    }
+}
+
+suspend fun getPostsOfFollowing(following: List<String>): List<Post> {
+    val allPosts = posts.find().toList()
+    return allPosts.filter {
+        following.contains(it.authorUid)
+    }.toList()
+}
+
+suspend fun toggleLike(postId: String, uid: String): Boolean {
+    val post = posts.findOneById(postId) ?: return false
+    val isLiked = uid in post.likes
+    val likes = post.likes
+    return posts.updateOneById(postId, setValue(Post::likes, if(isLiked) likes - uid else likes + uid)).wasAcknowledged()
+}
+
+
+// Comments
+
+suspend fun addComment(comment: Comment): Boolean {
+    return comments.insertOne(comment).wasAcknowledged()
+}
+
+suspend fun deleteComment(id: String): Boolean {
+    return comments.deleteOneById(id).wasAcknowledged()
+}
+
+
+
+
+
+
+
+
+
+
