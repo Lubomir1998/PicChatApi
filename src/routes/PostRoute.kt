@@ -83,4 +83,20 @@ fun Route.postRoute() {
         }
     }
 
+    route("/getPostsForUser/{uid}") {
+        authenticate {
+            get {
+                withContext(Dispatchers.IO) {
+
+                    val uid = call.parameters["uid"]!!
+
+                    val posts = getPostsForProfile(uid)
+
+                    call.respond(OK, posts)
+
+                }
+            }
+        }
+    }
+
 }

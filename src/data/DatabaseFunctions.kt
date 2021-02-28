@@ -5,10 +5,13 @@ import com.example.data.collections.Comment
 import com.example.data.collections.Post
 import com.example.data.collections.User
 import com.example.security.checkHashForPassword
+import kotlinx.css.map
 import org.litote.kmongo.coroutine.coroutine
+import org.litote.kmongo.coroutine.updateOne
 import org.litote.kmongo.eq
 import org.litote.kmongo.reactivestreams.KMongo
 import org.litote.kmongo.setValue
+import java.util.*
 
 val client = KMongo.createClient().coroutine
 val database = client.getDatabase("PicChatDB")
@@ -51,6 +54,19 @@ suspend fun getUserById(uid: String): User? {
     return users.findOneById(uid)
 }
 
+suspend fun searchUsers(query: String, uid: String): List<User> {
+    val users = users.find().toList()
+    return users.filter { user ->
+        user.email != uid && user.username.toLowerCase().contains(query.toLowerCase())
+    }
+}
+
+suspend fun updateProfile(uid: String, profileImgUrl: String?, username: String, bio: String): Boolean {
+    val user = users.findOneById(uid) ?: return false
+    val newUser = User(user.email, username, bio, profileImgUrl ?: user.profileImgUrl, user.following, user.followers, user.posts, uid)
+    return users.updateOneById(uid, newUser).wasAcknowledged()
+}
+
 
 // Posts
 
@@ -80,6 +96,10 @@ suspend fun toggleLike(postId: String, uid: String): Boolean {
     val isLiked = uid in post.likes
     val likes = post.likes
     return posts.updateOneById(postId, setValue(Post::likes, if(isLiked) likes - uid else likes + uid)).wasAcknowledged()
+}
+
+suspend fun getPostsForProfile(uid: String): List<Post> {
+    return posts.find(Post::authorUid eq uid).toList()
 }
 
 
