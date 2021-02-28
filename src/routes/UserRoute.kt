@@ -75,8 +75,7 @@ fun Route.userRoute() {
                     val uid = getUidByEmail(email)
 
                     uid?.let {
-                        if (updateProfile(it, request.profileImgUrl
-                                        ?: DEFAULT_PROFILE_IMG_URL, request.username, request.bio)) {
+                        if (updateProfile(it, request.profileImgUrl, request.username, request.bio)) {
                             call.respond(OK, SimpleResponse(true, "Profile updated"))
                         } else {
                             call.respond(Conflict)
