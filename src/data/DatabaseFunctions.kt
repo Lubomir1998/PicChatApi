@@ -113,6 +113,9 @@ suspend fun deleteComment(id: String): Boolean {
     return comments.deleteOneById(id).wasAcknowledged()
 }
 
+suspend fun getCommentsForPost(postId: String): List<Comment> {
+    return comments.find(Comment::postId eq postId).toList()
+}
 
 
 
