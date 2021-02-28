@@ -3,6 +3,7 @@ package com.example.routes
 import com.example.data.addComment
 import com.example.data.collections.Comment
 import com.example.data.getCommentsForPost
+import com.example.data.responses.SimpleResponse
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
@@ -20,7 +21,7 @@ fun Route.commentRoute() {
         authenticate {
             post {
                 withContext(Dispatchers.IO) {
-                    val request = try {
+                    val comment = try {
                         call.receive<Comment>()
                     }
                     catch (e: ContentTransformationException) {
@@ -28,8 +29,8 @@ fun Route.commentRoute() {
                         return@withContext
                     }
 
-                    if(addComment(request)) {
-                        call.respond(OK)
+                    if(addComment(comment, comment.postId)) {
+                        call.respond(OK, SimpleResponse(true, "Commented"))
                     }
                     else {
                         call.respond(Conflict)

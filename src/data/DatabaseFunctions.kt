@@ -105,8 +105,12 @@ suspend fun getPostsForProfile(uid: String): List<Post> {
 
 // Comments
 
-suspend fun addComment(comment: Comment): Boolean {
+suspend fun addComment(comment: Comment, postId: String): Boolean {
+    val post = posts.findOneById(postId) ?: return false
     return comments.insertOne(comment).wasAcknowledged()
+            .also {
+        if(it) posts.updateOneById(postId, setValue(Post::comments, post.comments + 1))
+    }
 }
 
 suspend fun deleteComment(id: String): Boolean {
