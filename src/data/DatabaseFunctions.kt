@@ -61,6 +61,29 @@ suspend fun searchUsers(query: String, uid: String): List<User> {
     }
 }
 
+suspend fun toggleFollow(uid: String, currentUserEmail: String): Boolean {
+    val user = users.findOneById(uid) ?: return false
+    val currentUser = users.findOne(User::email eq currentUserEmail) ?: return false
+    return users
+            .updateOneById(uid, setValue(User::followers, if(user.followers.contains(currentUser.uid)) user.followers - currentUser.uid else user.followers + currentUser.uid))
+            .wasAcknowledged()
+            .also {
+                if(it) users
+                        .updateOneById(currentUser.uid, setValue(User::following, if(currentUser.following.contains(uid)) currentUser.following - uid else currentUser.following + uid))
+            }
+
+}
+
+suspend fun getAllFollowing(uid: String): List<String> {
+    val user = users.findOneById(uid) ?: return emptyList()
+    return user.following
+}
+
+suspend fun getAllFollowers(uid: String): List<String> {
+    val user = users.findOneById(uid) ?: return emptyList()
+    return user.followers
+}
+
 suspend fun updateProfile(uid: String, profileImgUrl: String?, username: String, bio: String): Boolean {
     val user = users.findOneById(uid) ?: return false
     val newUser = User(user.email, username, bio, profileImgUrl ?: user.profileImgUrl, user.following, user.followers, user.posts, uid)

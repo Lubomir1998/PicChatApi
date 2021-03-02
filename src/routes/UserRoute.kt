@@ -2,12 +2,10 @@ package com.example.routes
 
 import com.example.Constants
 import com.example.Constants.DEFAULT_PROFILE_IMG_URL
-import com.example.data.getUidByEmail
-import com.example.data.getUserById
+import com.example.data.*
+import com.example.data.requests.ToggleFollowRequest
 import com.example.data.requests.UpdateUserRequest
 import com.example.data.responses.SimpleResponse
-import com.example.data.searchUsers
-import com.example.data.updateProfile
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -81,6 +79,66 @@ fun Route.userRoute() {
                             call.respond(Conflict)
                         }
                     }
+
+                }
+            }
+        }
+    }
+
+    route("/getFollowing/{uid}") {
+        authenticate {
+            get {
+                withContext(Dispatchers.IO) {
+
+                    val uid = call.parameters["uid"]!!
+
+                    val list = getAllFollowing(uid)
+
+                    call.respond(OK, list)
+
+                }
+            }
+        }
+    }
+
+    route("/getFollowers/{uid}") {
+        authenticate {
+            get {
+                withContext(Dispatchers.IO) {
+
+                    val uid = call.parameters["uid"]!!
+
+                    val list = getAllFollowers(uid)
+
+                    call.respond(OK, list)
+
+                }
+            }
+        }
+    }
+
+    route("/toggleFollow") {
+        authenticate {
+            post {
+                withContext(Dispatchers.IO) {
+
+                    val request = try {
+                        call.receive<ToggleFollowRequest>()
+                    }
+                    catch (e: ContentTransformationException) {
+                        call.respond(BadRequest)
+                        return@withContext
+                    }
+
+                    val currentEmail = call.principal<UserIdPrincipal>()!!.name
+
+                    if(toggleFollow(request.uid, currentEmail)) {
+                        call.respond(OK, SimpleResponse(true, "Successful"))
+                    }
+                    else {
+                        call.respond(Conflict)
+                    }
+
 
                 }
             }
