@@ -125,6 +125,10 @@ suspend fun getPostsForProfile(uid: String): List<Post> {
     return posts.find(Post::authorUid eq uid).toList()
 }
 
+suspend fun getPostById(postId: String): Post? {
+    return posts.findOneById(postId)
+}
+
 
 // Comments
 

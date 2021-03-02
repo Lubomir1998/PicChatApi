@@ -60,6 +60,23 @@ fun Route.postRoute() {
         }
     }
 
+    route("getPost/{id}") {
+        authenticate {
+            get {
+                withContext(Dispatchers.IO) {
+                    val postId = call.parameters["id"]!!
+
+                    val post = getPostById(postId)
+
+                    post?.let {
+                        call.respond(OK, it)
+                    }
+
+                }
+            }
+        }
+    }
+
     route("/toggleLike") {
         authenticate {
             post {
