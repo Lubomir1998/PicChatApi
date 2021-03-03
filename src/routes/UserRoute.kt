@@ -133,7 +133,7 @@ fun Route.userRoute() {
                     val currentEmail = call.principal<UserIdPrincipal>()!!.name
 
                     if(toggleFollow(request.uid, currentEmail)) {
-                        call.respond(OK, SimpleResponse(true, "Successful"))
+                        call.respond(OK)
                     }
                     else {
                         call.respond(Conflict)
