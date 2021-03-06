@@ -1,10 +1,7 @@
 package com.example
 
 import com.example.data.checkIfPasswordIsCorrect
-import com.example.routes.authRoute
-import com.example.routes.commentRoute
-import com.example.routes.postRoute
-import com.example.routes.userRoute
+import com.example.routes.*
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -35,6 +32,7 @@ fun Application.module(testing: Boolean = false) {
         postRoute()
         userRoute()
         commentRoute()
+        notificationRoute()
     }
 
 }

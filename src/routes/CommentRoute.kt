@@ -2,6 +2,7 @@ package com.example.routes
 
 import com.example.data.addComment
 import com.example.data.collections.Comment
+import com.example.data.deleteComment
 import com.example.data.getCommentsForPost
 import com.example.data.responses.SimpleResponse
 import io.ktor.application.*
@@ -35,6 +36,32 @@ fun Route.commentRoute() {
                     else {
                         call.respond(Conflict)
                     }
+
+                }
+            }
+        }
+    }
+
+    route("/deleteComment") {
+        authenticate {
+            post {
+                withContext(Dispatchers.IO) {
+
+                    val comment = try {
+                        call.receive<Comment>()
+                    }
+                    catch (e: ContentTransformationException) {
+                        call.respond(BadRequest)
+                        return@withContext
+                    }
+
+                    if(deleteComment(comment)) {
+                        call.respond(OK, SimpleResponse(true, "Comment deleted"))
+                    }
+                    else {
+                        call.respond(Conflict)
+                    }
+
 
                 }
             }

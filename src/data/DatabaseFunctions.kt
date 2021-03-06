@@ -1,9 +1,6 @@
 package com.example.data
 
-import com.example.data.collections.Auth
-import com.example.data.collections.Comment
-import com.example.data.collections.Post
-import com.example.data.collections.User
+import com.example.data.collections.*
 import com.example.security.checkHashForPassword
 import kotlinx.css.map
 import org.litote.kmongo.coroutine.coroutine
@@ -20,6 +17,7 @@ val users = database.getCollection<User>()
 val auths = database.getCollection<Auth>()
 val posts = database.getCollection<Post>()
 val comments = database.getCollection<Comment>()
+val notifications = database.getCollection<Notification>()
 
 
 
@@ -140,12 +138,27 @@ suspend fun addComment(comment: Comment, postId: String): Boolean {
     }
 }
 
-suspend fun deleteComment(id: String): Boolean {
-    return comments.deleteOneById(id).wasAcknowledged()
+suspend fun deleteComment(comment: Comment): Boolean {
+    val post = posts.findOneById(comment.postId) ?: return false
+    return comments.deleteOneById(comment.id).wasAcknowledged()
+            .also {
+                if (it) posts.updateOneById(comment.postId, setValue(Post::comments, post.comments - 1))
+            }
 }
 
 suspend fun getCommentsForPost(postId: String): List<Comment> {
     return comments.find(Comment::postId eq postId).toList()
+}
+
+
+// Notifications
+
+suspend fun addNotification(notification: Notification): Boolean {
+    return notifications.insertOne(notification).wasAcknowledged()
+}
+
+suspend fun getNotifications(uid: String): List<Notification> {
+    return notifications.find(Notification::recipientUid eq uid).toList()
 }
 
 
