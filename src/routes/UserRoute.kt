@@ -117,6 +117,21 @@ fun Route.userRoute() {
         }
     }
 
+    route("/getUserByEmail/{email}") {
+        get {
+            withContext(Dispatchers.IO) {
+                val email = call.parameters["email"]!!
+
+                val user = getUserByEmail(email)
+
+                user?.let {
+                    call.respond(OK, it)
+                }
+
+            }
+        }
+    }
+
     route("/toggleFollow") {
         authenticate {
             post {
