@@ -2,13 +2,10 @@ package com.example.data
 
 import com.example.data.collections.*
 import com.example.security.checkHashForPassword
-import kotlinx.css.map
 import org.litote.kmongo.coroutine.coroutine
-import org.litote.kmongo.coroutine.updateOne
 import org.litote.kmongo.eq
 import org.litote.kmongo.reactivestreams.KMongo
 import org.litote.kmongo.setValue
-import java.util.*
 
 val client = KMongo.createClient().coroutine
 val database = client.getDatabase("PicChatDB")
@@ -99,9 +96,21 @@ suspend fun createPost(post: Post, uid: String): Boolean {
 }
 
 suspend fun deletePost(postId: String, uid: String): Boolean {
+    val postComments = comments.find().toList().filter {
+        it.postId == postId
+    }
+    val postNotifications = notifications.find().toList().filter {
+        it.postId == postId
+    }
     val user = users.findOneById(uid) ?: return false
     return posts.deleteOneById(postId).wasAcknowledged().also {
         if(it) users.updateOneById(uid, setValue(User::posts, user.posts - 1))
+        for (comment in postComments) {
+            comments.deleteOneById(comment.id)
+        }
+        for(notification in postNotifications) {
+            notifications.deleteOneById(notification.id)
+        }
     }
 }
 

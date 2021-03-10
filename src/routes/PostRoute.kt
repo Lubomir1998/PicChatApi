@@ -6,7 +6,6 @@ import com.example.data.requests.ToggleLikeRequest
 import com.example.data.responses.SimpleResponse
 import io.ktor.application.*
 import io.ktor.auth.*
-import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.BadRequest
 import io.ktor.http.HttpStatusCode.Companion.Conflict
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -38,6 +37,30 @@ fun Route.postRoute() {
                         call.respond(Conflict)
                     }
 
+
+                }
+            }
+        }
+    }
+
+    route("/deletePost") {
+        authenticate {
+            post {
+                withContext(Dispatchers.IO) {
+
+                    val post = try {
+                        call.receive<Post>()
+                    }
+                    catch (e: ContentTransformationException) {
+                        call.respond(BadRequest)
+                        return@withContext
+                    }
+
+                    if (deletePost(post.id, post.authorUid)) {
+                        call.respond(OK, SimpleResponse(true, "Post deleted"))
+                    } else {
+                        call.respond(Conflict)
+                    }
 
                 }
             }
