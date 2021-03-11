@@ -6,6 +6,7 @@ import org.bson.types.ObjectId
 data class Auth(
     val email: String,
     val password: String,
+    var tokens: List<String> = listOf(),
     @BsonId
     val uid: String = ObjectId().toString()
 )

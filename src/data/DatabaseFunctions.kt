@@ -24,6 +24,20 @@ suspend fun registerUser(auth: Auth): Boolean {
     return auths.insertOne(auth).wasAcknowledged()
 }
 
+suspend fun addTokenForUser(uid: String, token: String): Boolean {
+    val auth = auths.findOneById(uid) ?: return false
+    return auths.updateOneById(uid, setValue(Auth::tokens, auth.tokens + token)).wasAcknowledged()
+}
+
+suspend fun removeTokenForUser(uid: String, token: String): Boolean {
+    val auth = auths.findOneById(uid) ?: return false
+    return auths.updateOneById(uid, setValue(Auth::tokens, auth.tokens - token)).wasAcknowledged()
+}
+
+suspend fun getTokens(uid: String): List<String> {
+    return auths.findOneById(uid)?.tokens ?: return emptyList()
+}
+
 suspend fun addUser(user: User): Boolean {
     return users.insertOne(user).wasAcknowledged()
 }

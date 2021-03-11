@@ -4,6 +4,7 @@ import com.example.data.*
 import com.example.data.collections.Auth
 import com.example.data.collections.User
 import com.example.data.requests.AccountRequest
+import com.example.data.requests.RemoveTokenRequest
 import com.example.data.responses.SimpleResponse
 import com.example.security.getHashWithSalt
 import io.ktor.application.*
@@ -33,7 +34,7 @@ fun Route.authRoute() {
                 val username = call.parameters["username"]!!
 
                 if(!userExists) {
-                    if(registerUser(Auth(auth.email, getHashWithSalt(auth.password), auth.uid))) {
+                    if(registerUser(Auth(auth.email, getHashWithSalt(auth.password), uid = auth.uid))) {
                         val user = User(auth.email, username, uid = auth.uid)
                         if(addUser(user)) {
                             call.respond(OK, SimpleResponse(true, "Successfully created account"))
@@ -55,7 +56,7 @@ fun Route.authRoute() {
         }
     }
 
-    route("/login") {
+    route("/login/{token}") {
         post {
             withContext(Dispatchers.IO) {
                 val request = try {
@@ -65,16 +66,68 @@ fun Route.authRoute() {
                     return@withContext
                 }
 
+                val token = call.parameters["token"]!!
+                val uid = getUidByEmail(request.email)
+
                 val passwordIsCorrect = checkIfPasswordIsCorrect(request.email, request.password)
 
+
                 if(passwordIsCorrect) {
-                    call.respond(OK, SimpleResponse(true, "Successfully logged in"))
+                    uid?.let {
+                        if(addTokenForUser(it, token)) {
+                            call.respond(OK, SimpleResponse(true, "Successfully logged in"))
+                        }
+                        else {
+                            call.respond(OK, SimpleResponse(false, "Error occurred"))
+                        }
+                    } ?: call.respond(OK, SimpleResponse(false, "Error occurred"))
                 }
                 else {
                     call.respond(OK, SimpleResponse(false, "Email or password incorrect"))
                 }
 
 
+            }
+        }
+    }
+
+    route("/removeToken") {
+        authenticate {
+            post {
+                withContext(Dispatchers.IO) {
+
+                    val request = try {
+                        call.receive<RemoveTokenRequest>()
+                    } catch (e: ContentTransformationException) {
+                        call.respond(BadRequest)
+                        return@withContext
+                    }
+
+                    if (removeTokenForUser(request.uid, request.token)) {
+                        call.respond(OK, SimpleResponse(true, "Successful"))
+                    } else {
+                        call.respond(OK, SimpleResponse(false, "Error"))
+                    }
+
+
+                }
+            }
+        }
+    }
+
+    route("/getTokens/{uid}") {
+        authenticate {
+            get {
+                withContext(Dispatchers.IO) {
+
+                    val uid = call.parameters["uid"]!!
+
+                    val tokens = getTokens(uid)
+
+                    call.respond(OK, tokens)
+
+
+                }
             }
         }
     }
