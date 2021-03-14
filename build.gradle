@@ -56,4 +56,6 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.14'
     implementation "io.ktor:ktor-network-tls:$ktor_version"
     implementation "io.ktor:ktor-freemarker:$ktor_version"
+
+    implementation "io.ktor:ktor-network-tls-certificates:$ktor_version"
 }
