@@ -177,6 +177,7 @@ suspend fun getCommentsForPost(postId: String): List<Comment> {
 // Notifications
 
 suspend fun addNotification(notification: Notification): Boolean {
+    if(notification.senderUid == notification.recipientUid) return false
     return notifications.insertOne(notification).wasAcknowledged()
 }
 
